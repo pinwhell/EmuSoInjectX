@@ -1,3 +1,6 @@
-.vscode\
-libs\
-obj\
+/.vscode/
+/.vscode/**/
+/libs/
+/libs/**/
+/obj/
+/obj/**/

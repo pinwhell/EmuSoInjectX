@@ -8,6 +8,9 @@ LOCAL_MODULE := emuinj
 
 LOCAL_SRC_FILES := \
 main.cpp \
-EmuInjectArm.cpp
+EmuInjectArm.cpp \
+LinuxProcess.cpp \
+EmuSoInjectX.cpp \
+Helper.cpp
 
 include $(BUILD_EXECUTABLE)

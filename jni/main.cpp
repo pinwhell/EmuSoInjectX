@@ -1,13 +1,27 @@
 #include <iostream>
 #include <EmuInjectArm.h>
+#include "EmuSoInjectX.h"
+
+void PrintHelp()
+{
+   printf("./emuinj [process name] [path to library]\n"); 
+}
 
 int main(int argv, const char** argc)
 {
-    if(argv < 2)
+    if(argv != 3)
     {
-        printf("./emuinj [path to library]\n");
+        PrintHelp();
         return 1;
     }
 
-    EmuInjectArm::Inject(argc[1]);
+    if(EmuInjectArm::Inject(argc[1], argc[2]) == false)
+    {
+        printf("Error: %s\n", FormatLastError());
+        return 1;
+    }
+
+    printf("Injected Sucessfully\n");
+
+    return 0;
 }
