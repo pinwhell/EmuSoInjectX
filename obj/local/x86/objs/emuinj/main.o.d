@@ -64,7 +64,8 @@
   C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\cstdarg \
   C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\__bsd_locale_fallbacks.h \
   C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\bitset \
-  C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\__bit_reference
+  C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\__bit_reference \
+  jni\EmuInjectArm.h
 
 C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\iostream:
 
@@ -197,3 +198,5 @@ C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-s
 C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\bitset:
 
 C:\Users\Wing\AppData\Local\Android\Sdk\ndk\21.4.7075529\build\\..\sources\cxx-stl\llvm-libc++\include\__bit_reference:
+
+jni\EmuInjectArm.h:

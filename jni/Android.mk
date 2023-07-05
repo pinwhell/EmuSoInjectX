@@ -6,6 +6,8 @@ LOCAL_ARM_NEON := false
 
 LOCAL_MODULE := emuinj
 
-LOCAL_SRC_FILES := main.cpp
+LOCAL_SRC_FILES := \
+main.cpp \
+EmuInjectArm.cpp
 
 include $(BUILD_EXECUTABLE)
