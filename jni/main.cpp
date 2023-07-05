@@ -1,6 +1,14 @@
 #include <iostream>
 
-int main()
+int main(int argv, const char** argc)
 {
-    printf("Start");
+    if(argv < 2)
+    {
+        printf("./emuinj [path to library]");
+        return 1;
+    }
+
+    printf("%s\n", argc[1]);
+
+    //EmuInjectArm::Inject();
 }

@@ -1,1 +1,1 @@
-Build.bat & Update.bat & pause & cls
+Build.bat & UpdateBst.bat & pause & cls
