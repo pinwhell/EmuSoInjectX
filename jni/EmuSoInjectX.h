@@ -3,7 +3,8 @@
 enum ESIXErr {
     ERR_OK,
     ERR_PROCESS_NOT_FOUND,
-    ERR_INJECTION_FILE_NOT_FOUND
+    ERR_INJECTION_FILE_NOT_FOUND,
+    ERR_ACCESS_DENIED
 };
 
 /*Set the Error State*/

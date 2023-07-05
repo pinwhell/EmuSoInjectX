@@ -11,6 +11,8 @@ main.cpp \
 EmuInjectArm.cpp \
 LinuxProcess.cpp \
 EmuSoInjectX.cpp \
-Helper.cpp
+Helper.cpp \
+Ptrace.cpp \
+ELFHelper.cpp
 
 include $(BUILD_EXECUTABLE)

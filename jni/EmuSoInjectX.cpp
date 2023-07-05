@@ -8,6 +8,7 @@ std::unordered_map<ESIXErr, std::string> gErrStr {
     {ERR_OK, "Error Ok"},
     {ERR_PROCESS_NOT_FOUND, "Process Not Found"},
     {ERR_INJECTION_FILE_NOT_FOUND, "Injection File Not Found"},
+    {ERR_ACCESS_DENIED, "Access Denied"}
 };
 
 void SetLastError(ESIXErr err)
