@@ -7,6 +7,7 @@
 #include "Helper.h"
 #include "Ptrace.h"
 #include "ELFHelper.h"
+#include <sys/mman.h>
 
 // Must Remove
 #include <stdio.h>
@@ -19,6 +20,46 @@ bool _PtraceStopCallbackResume(int procId, std::function<void()> callback)
         SetLastError(ERR_ACCESS_DENIED);
 
     return result;
+}
+
+uintptr_t PtraceCallMMap(HANDLE hProc, size_t size, int prot)
+{
+    Handle* pHandle = nullptr;
+
+    if(CastHandle(hProc, &pHandle) == false)
+        return -1;
+
+    uintptr_t mmap = FindModuleSymbol32(hProc, "libc.so", "mmap");
+
+    if(mmap == INVALID_SYMBOL_ADDR)
+        return -1;
+
+    return PtraceCall(pHandle->mPid, mmap, {
+        0x0,
+        size,
+        (unsigned int)prot,
+        MAP_PRIVATE|MAP_ANONYMOUS,
+        (unsigned int)-1,
+        0
+    });
+}
+
+uintptr_t PtraceCallMUnmap(HANDLE hProc, uintptr_t entry, size_t size)
+{
+    Handle* pHandle = nullptr;
+
+    if(CastHandle(hProc, &pHandle) == false)
+        return -1;
+
+    uintptr_t munmap = FindModuleSymbol32(hProc, "libc.so", "munmap");
+
+    if(munmap == INVALID_SYMBOL_ADDR)
+        return -1;
+
+    return PtraceCall(pHandle->mPid, munmap, {
+        entry,
+        size
+    });
 }
 
 bool EmuInjectArm::Inject(const char* pProcName, const char* pLibPath)
@@ -45,13 +86,17 @@ bool EmuInjectArm::Inject(const char* pProcName, const char* pLibPath)
         return false;
     }
 
-    size_t malloc = FindModuleSymbol32(hProc, "libc.so", "malloc");
+    
 
     bool result = _PtraceStopCallbackResume(procId, [&]{
 
-        auto result = PtraceCall(procId, malloc, {0x1000});
-        printf("Malloc Returned %08X\n", result);
+        uintptr_t result = PtraceCallMMap(hProc, 0x1000, PROT_READ | PROT_WRITE);
+        printf("Mmap Returned %08X\n", result);
 
+        getchar();
+        getchar();
+
+        PtraceCallMUnmap(hProc, result, 0x1000);
     });
 
     if(result == false)
