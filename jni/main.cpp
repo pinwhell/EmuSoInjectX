@@ -1,6 +1,6 @@
 #include <iostream>
 #include <EmuInjectArm.h>
-#include "EmuSoInjectX.h"
+#include "Errors.h"
 
 void PrintHelp()
 {

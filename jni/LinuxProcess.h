@@ -3,48 +3,21 @@
 #include <cstdio>
 #include <vector>
 #include <string>
+#include<functional>
 
 #define INVALID_PROCESS_ID (~((int)0))
 #define INVALID_MODULE_BASE_ADDR (~((unsigned int)0))
 #define INVALID_SYMBOL_ADDR (~((unsigned int)0))
-#define INVALID_HANDLE_VALUE (void*)(~((int)0))
-#define HANDLE_VALID(handle) ((handle < 0) == false)
 
-typedef void* HANDLE;
-
-struct Handle {
-    int mPid;
-    int mMemFD;
-    FILE* mMapsFile;
-};
-
-std::vector<int> getAllThreadIds(HANDLE hProc);
-bool CastHandle(HANDLE hProc, Handle** outHandle);
 int FindProcessId(const char* processName);
-HANDLE OpenProcess(int pid);
-void CloseProcess(HANDLE handle);
-bool ReadProcessMemory(HANDLE hProc, unsigned int addr, void* data, size_t len);
-bool WriteProcessMemory(HANDLE hProc, unsigned int addr, const void* data, size_t len);
-uintptr_t FindModuleBaseAddress(HANDLE hProc, const char* name, bool nb = false);
-std::string FindModulePath(HANDLE hProc, const char* name, bool nb = false);
-uintptr_t FindModuleSymbol32(HANDLE hProc, const char* moduleName, const char* symbolName, bool nb = false);
 
-bool PushSnapshot(HANDLE handle, unsigned int atAddr, size_t len);
-bool PopSnapshot(HANDLE handle, unsigned int atAddr);
+void ForEachMapsSegment(FILE* mapsFile, std::function<bool(const char*)> callback);
+void ForEachMapsSegmentContains(const char* str, FILE* mapsFile, std::function<bool(char*)> callback);
 
+uintptr_t FindModuleBaseAddress(FILE* mapsFile, const char* name, bool nb = false);
+uintptr_t FindModuleBaseAddress(int procId, const char* name, bool nb = false);
 
-template<typename T>
-T ReadProcessMemoryWrapper(HANDLE hProc, unsigned int addr)
-{
-    T obj;
+std::string FindModulePath(FILE* mapsFile, const char* name, bool nb = false);
+std::string FindModulePath(int procId, const char* name, bool nb = false);
 
-    ReadProcessMemory(hProc, addr, (void*)&obj, sizeof(T));
-
-    return obj;
-}
-
-template<typename T>
-bool WriteProcessMemoryWrapper(HANDLE hProc, unsigned int addr, const T& obj)
-{
-    return WriteProcessMemory(hProc, addr, (const void*)&obj, sizeof(T));
-}
+uintptr_t FindModuleSymbol32(int procId, const char* moduleName, const char* symbolName, bool nb = false);

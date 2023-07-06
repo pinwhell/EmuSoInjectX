@@ -1,18 +1,29 @@
 #include "Ptrace.h"
 #include <sys/ptrace.h>
 #include <sys/wait.h>
-#include "LinuxProcess.h"
-#include <errno.h>
 #include <vector>
-#include <dirent.h>
-#include <string.h>
 #include <unordered_map>
 #include <stack>
-#include <vector>
+#include "LinuxProcess.h"
+#include "Errors.h"
+
+template<typename T, typename K>
+long Ptrace(long request, unsigned long pid, T addr, K data)
+{
+    long result = 0;
+
+    if ((result = ptrace(request, pid, (void*)addr, (void*)data)) < 0)
+    {
+        SetLastError(ERR_ACCESS_DENIED);
+        return result;
+    }
+
+    return result;
+}
 
 bool PtraceStopCallbackResume(int procId, std::function<void()> callback)
 {
-    if (ptrace(PTRACE_ATTACH, procId, NULL, NULL) < 0) 
+    if (Ptrace(PTRACE_ATTACH, procId, NULL, NULL) < 0) 
         return false;
 
     int status;
@@ -21,7 +32,7 @@ bool PtraceStopCallbackResume(int procId, std::function<void()> callback)
 
     callback();
 
-    if (ptrace(PTRACE_DETACH, procId, NULL, NULL) < 0)
+    if (Ptrace(PTRACE_DETACH, procId, NULL, NULL) < 0)
         return false;
 
     return true;
@@ -29,7 +40,7 @@ bool PtraceStopCallbackResume(int procId, std::function<void()> callback)
 
 bool GetContext(int procId, user_regs_struct& ctx)
 {
-    if(ptrace(PTRACE_GETREGS, procId, NULL, &ctx) < 0)
+    if(Ptrace(PTRACE_GETREGS, procId, NULL, &ctx) < 0)
         return false;
 
     return true;
@@ -37,7 +48,7 @@ bool GetContext(int procId, user_regs_struct& ctx)
 
 bool SetContext(int procId, user_regs_struct& ctx)
 {
-    if(ptrace(PTRACE_SETREGS, procId, NULL, &ctx) < 0)
+    if(Ptrace(PTRACE_SETREGS, procId, NULL, &ctx) < 0)
         return false;
 
     return true;
@@ -45,7 +56,7 @@ bool SetContext(int procId, user_regs_struct& ctx)
 
 bool PtraceContinue(int procId)
 {
-    if(ptrace(PTRACE_CONT, procId, NULL, NULL) < 0)
+    if(Ptrace(PTRACE_CONT, procId, NULL, NULL) < 0)
         return false;
 
     return true;
@@ -91,6 +102,19 @@ uintptr_t PtraceCall(int procId, uintptr_t entry, const std::vector<uint32_t>& p
     return ctx.eax;
 }
 
+uintptr_t PtraceCallModuleSymbol(int procId, const char* module, const char* symbol, bool nb, const std::vector<uint32_t>& params)
+{
+    uintptr_t symbolEntry = FindModuleSymbol32(procId, module, symbol, nb);
+
+    if(symbolEntry == INVALID_SYMBOL_ADDR)
+    {
+        SetLastError(ERR_SYMBOL_NOT_FOUND);
+        return 0;
+    }
+
+    return PtraceCall(procId, symbolEntry, params);
+}
+
 bool PtraceReadProcessMemory(int pid, unsigned int addr, void* data, size_t len) {
     uint32_t i, j, remain;    
     uint8_t *laddr;    
@@ -106,14 +130,14 @@ bool PtraceReadProcessMemory(int pid, unsigned int addr, void* data, size_t len)
     laddr = (uint8_t *)data;    
     
     for (i = 0; i < j; i ++) {    
-        d.val = ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
+        d.val = Ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
         memcpy(laddr, d.chars, 4);    
         addr += 4;    
         laddr += 4;    
     }    
     
     if (remain > 0) {    
-        d.val = ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
+        d.val = Ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
         memcpy(laddr, d.chars, remain);    
     }    
     
@@ -136,19 +160,19 @@ bool PtraceWriteProcessMemory(int pid, unsigned int addr, const void* data, size
     
     for (i = 0; i < j; i ++) {    
         memcpy(d.chars, laddr, 4);    
-        ptrace(PTRACE_POKETEXT, pid, addr, d.val);    
+        Ptrace(PTRACE_POKETEXT, pid, addr, d.val);    
     
         addr  += 4;    
         laddr += 4;    
     }    
     
     if (remain > 0) {    
-        d.val = ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
+        d.val = Ptrace(PTRACE_PEEKTEXT, pid, addr, 0);    
         for (i = 0; i < remain; i ++) {    
             d.chars[i] = *laddr ++;    
         }    
     
-        ptrace(PTRACE_POKETEXT, pid, addr, d.val);    
+        Ptrace(PTRACE_POKETEXT, pid, addr, d.val);    
     }    
     
     return true;    

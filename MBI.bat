@@ -1,0 +1,1 @@
+ndk-build & UpdateBst.bat & pause & cls

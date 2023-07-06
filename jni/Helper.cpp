@@ -19,3 +19,17 @@ bool ToAbsolutePath(const char* path, std::string& outPath)
 
     return resolvedPath != nullptr;
 }
+
+bool OpenCallbackClose(const char* pFileName, const char* mode, std::function<void(FILE*)> callback)
+{
+    FILE* f = fopen(pFileName, mode);
+
+    if(f == nullptr)
+        return false;    
+
+    callback(f);
+
+    fclose(f);
+
+    return true;
+}

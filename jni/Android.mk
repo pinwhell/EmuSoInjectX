@@ -10,9 +10,11 @@ LOCAL_SRC_FILES := \
 main.cpp \
 EmuInjectArm.cpp \
 LinuxProcess.cpp \
-EmuSoInjectX.cpp \
+Errors.cpp \
 Helper.cpp \
 Ptrace.cpp \
-ELFHelper.cpp
+ELFHelper.cpp \
+RemoteString.cpp \
+PtraceRPCWrappers.cpp
 
 include $(BUILD_EXECUTABLE)

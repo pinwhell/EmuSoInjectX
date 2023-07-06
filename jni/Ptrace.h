@@ -22,6 +22,7 @@ bool PtraceContinue(int procId);
 
 /*This function spect a context of ptrace alredy attached and the process alredy stopped*/
 uintptr_t PtraceCall(int procId, uintptr_t entry, const std::vector<uint32_t>& params);
+uintptr_t PtraceCallModuleSymbol(int procId, const char* module, const char* symbol, bool nb, const std::vector<uint32_t>& params);
 
 /* Wrappers */
 template<typename T>
