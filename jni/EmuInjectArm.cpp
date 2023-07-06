@@ -8,9 +8,9 @@
 #include "Ptrace.h"
 #include "ELFHelper.h"
 #include <sys/mman.h>
+#include <dlfcn.h>
 
-// Must Remove
-#include <stdio.h>
+#define NATIVEBRIDGE_LOADLIB_SYMNAME "_ZN7android23NativeBridgeLoadLibraryEPKci"
 
 bool _PtraceStopCallbackResume(int procId, std::function<void()> callback)
 {
@@ -44,6 +44,24 @@ uintptr_t PtraceCallMMap(HANDLE hProc, size_t size, int prot)
     });
 }
 
+void* PtraceCallNativeBridgeDlopen(HANDLE hProc, uintptr_t libPathRemoteAddr, int mode)
+{
+    Handle* pHandle = nullptr;
+
+    if(CastHandle(hProc, &pHandle) == false)
+        return nullptr;
+
+    uintptr_t nbDlopen = FindModuleSymbol32(hProc, "libnativebridge.so", NATIVEBRIDGE_LOADLIB_SYMNAME);
+
+    if(nbDlopen == INVALID_SYMBOL_ADDR)
+        return nullptr;
+
+    return (void*)PtraceCall(pHandle->mPid, nbDlopen, {
+        libPathRemoteAddr,
+        (unsigned int)mode
+    });
+}
+
 uintptr_t PtraceCallMUnmap(HANDLE hProc, uintptr_t entry, size_t size)
 {
     Handle* pHandle = nullptr;
@@ -62,9 +80,53 @@ uintptr_t PtraceCallMUnmap(HANDLE hProc, uintptr_t entry, size_t size)
     });
 }
 
+struct RemoteString {
+
+    RemoteString(HANDLE hProc, const char* str)
+        : mhProc(hProc)
+    {
+        Handle* pHandle = nullptr;
+
+        if(CastHandle(hProc, &pHandle) == false)
+            return;
+
+        mLen = strlen(str);
+
+        mEntry = PtraceCallMMap(mhProc, mLen, PROT_READ);
+
+        if(mEntry < 0 == false)
+        {
+            PtraceWriteProcessMemory(pHandle->mPid, mEntry, str, mLen);
+            return;
+        }
+
+        mEntry = 0;
+    }
+
+    ~RemoteString()
+    {
+        if(mEntry)
+        {
+            PtraceCallMUnmap(mhProc, mEntry, mLen);
+        }
+    }
+
+    uintptr_t mEntry;
+    size_t mLen;
+    HANDLE mhProc;
+};
+
 bool EmuInjectArm::Inject(const char* pProcName, const char* pLibPath)
 {
     if(FileExists(pLibPath) == false)
+    {
+        SetLastError(ERR_INJECTION_FILE_NOT_FOUND);
+        return false;
+    }
+
+    std::string pLibAbsolutePath = "";
+
+    if(ToAbsolutePath(pLibPath, pLibAbsolutePath) == false)
     {
         SetLastError(ERR_INJECTION_FILE_NOT_FOUND);
         return false;
@@ -85,24 +147,23 @@ bool EmuInjectArm::Inject(const char* pProcName, const char* pLibPath)
         SetLastError(ERR_ACCESS_DENIED);
         return false;
     }
-
-    
-
+    bool bSucessdedInjection = false;
     bool result = _PtraceStopCallbackResume(procId, [&]{
+        RemoteString rs(hProc, pLibAbsolutePath.c_str());
 
-        uintptr_t result = PtraceCallMMap(hProc, 0x1000, PROT_READ | PROT_WRITE);
-        printf("Mmap Returned %08X\n", result);
+        bSucessdedInjection = PtraceCallNativeBridgeDlopen(hProc, rs.mEntry, RTLD_NOW) != nullptr;
 
-        getchar();
-        getchar();
-
-        PtraceCallMUnmap(hProc, result, 0x1000);
+        if(bSucessdedInjection == false)
+            SetLastError(ERR_INJECTION_FAILED);
     });
+
+    CloseProcess(hProc);
 
     if(result == false)
         return false;
 
-    CloseProcess(hProc);
+    if(bSucessdedInjection == false)
+        return false;
 
     return true;
 }

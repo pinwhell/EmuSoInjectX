@@ -41,7 +41,7 @@ size_t GetSymbolOffset32(const char* elfPath, const char* symbolName)
 
     for(int i = 0; i < entryElf ->e_shnum; i++)
     {
-        if(sections[i].sh_type != SHT_SYMTAB)
+        if(sections[i].sh_type != SHT_SYMTAB && sections[i].sh_type != SHT_DYNSYM)
             continue;
 
         symtab = sections + i;
